@@ -26,6 +26,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     'I\'m completely new!',
     'I know a little bit of FSL',
   ];
+  double getResponsiveFontSize(BuildContext context, double baseFontSize) {
+  double screenWidth = MediaQuery.sizeOf(context).width;
+  double scaleFactor = screenWidth / 375.0; // 375 is standard mobile design width
+  return (baseFontSize * scaleFactor).clamp(baseFontSize * 0.8, baseFontSize * 1.4);
+}
 
   @override
   Widget build(BuildContext context) {
@@ -99,11 +104,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                             ),
                                           ),
                                           const Text(
-                                            'Choose which best describes you as a learner.',
+                                            'Choose which best describes you as a learner. There are no right or wrong answers.',
+                                            textAlign: TextAlign.center,
                                             style: TextStyle(
                                               color: Color(0xFF002247),
                                               fontSize: 24,
                                               fontWeight: FontWeight.w300,
+                                              height: 1,
                                             ),
                                           ),
                                           const SizedBox(height: 12),
@@ -147,9 +154,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                             Text(
                                               'How much do you know?',
                                               textAlign: TextAlign.center,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 color: Color(0xFF002247),
-                                                fontSize: 80,
+                                                fontSize: compact ? 56 : 80,
                                                 height: 0.8,
                                                 fontWeight: FontWeight.bold,
                                               ),
@@ -157,6 +164,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                             const SizedBox(height: 8),
                                             const Text(
                                               'Do you know any FSL or are you completely new?',
+                                              textAlign: TextAlign.center,
                                               style: TextStyle(
                                                 color: Color(0xFF002247),
                                                 fontSize: 24,
@@ -164,25 +172,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                               ),
                                             ),
                                             const SizedBox(height: 12),
-                                            ChoiceCard(
+                                            
+                                              ChoiceCard(
                                               title: knowledgeLevels[0], 
-                                              subtitle: 'Hey', 
+                                              subtitle: 'Start with the basics and learn step by step.', 
                                               isSelected: selectedKnowledgeIndex == 0, 
                                               onTap: () => setState(
                                                 () => selectedKnowledgeIndex = 0)
                                             ),
+                                            
                                             const SizedBox(height: 12),
-                                            ChoiceCard(
+                                            
+                                              ChoiceCard(
                                               title: knowledgeLevels[1], 
-                                              subtitle: 'Hey', 
+                                              subtitle: 'Answer a few questions to find your starting point.', 
                                               isSelected: selectedKnowledgeIndex == 1, 
                                               onTap: () => setState(
                                                 () => selectedKnowledgeIndex = 1)
                                             )
+                                            
                                           ], // End of children array
                                         ),
                                       ),
-                                      2 => Center( // take placement test or  not
+                                      2 => Center(
+                                        /* 
+                                        switch then if its this choice, go heree, if anoither choice, go another
+                                        */
+                                         // take placement test or  not
                                         key: const ValueKey(2),
                                         child: Column(
                                           mainAxisSize: MainAxisSize.max,

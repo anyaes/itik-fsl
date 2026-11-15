@@ -20,7 +20,7 @@ class ChoiceCard extends StatefulWidget {
 
 class _ChoiceCardState extends State<ChoiceCard>{
   bool isHovered = false;
-
+    
   @override
   Widget build(BuildContext context) {
     return MouseRegion(

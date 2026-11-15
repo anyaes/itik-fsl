@@ -12,6 +12,7 @@ class Button extends StatefulWidget {
 
 class _ButtonState extends State<Button> {
   bool isHovered = false;
+  bool isPressed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -20,8 +21,13 @@ class _ButtonState extends State<Button> {
       onExit: (_) => setState(() => isHovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
+        onTapDown: (_) => setState(() => isPressed = true),
+        onTapUp: (_) => setState(() => isPressed = false),
+        onTapCancel: () => setState(() => isPressed = false),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 100),
+          transform: Matrix4.translationValues(0, isPressed ? 3 : 0, 0),
+          transformAlignment: Alignment.center,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: const Color(0xFF4EBFD0),
@@ -32,7 +38,7 @@ class _ButtonState extends State<Button> {
                 color: const Color(0xFF1EA8C3),
                 blurRadius: 0,
                 spreadRadius: 0,
-                offset: const Offset(0, 4),
+                offset: Offset(0, isPressed ? 1 : 4),
               ),
             ],
           ),
