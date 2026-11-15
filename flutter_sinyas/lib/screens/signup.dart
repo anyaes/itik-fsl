@@ -33,6 +33,7 @@ class _SignupScreenState extends State<SignupScreen>{
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirm = true;
   bool _isLoading = false;
 
   @override
@@ -91,7 +92,7 @@ class _SignupScreenState extends State<SignupScreen>{
                     children: [
                       // Email or username
                       Text(
-                        'Log in',
+                        'Create Account',
                         style: TextStyle(
                           color: Color(0xFF002247),
                           fontSize: 80,
@@ -180,8 +181,73 @@ class _SignupScreenState extends State<SignupScreen>{
                           )
                           )
                         ),
-                        // color: Color(0xFFFAFCFA),
                       ),
+                      const SizedBox(height: 12),
+                      // confirm password
+                      TextFormField(
+                        controller: _confirmPasswordController,
+                        obscureText: _obscureConfirm,
+                        style: const TextStyle(
+                          fontSize: 32,
+                          color: Color(0xFF002247),
+                        ),
+                        decoration: InputDecoration(
+                          suffixIcon: IconButton(
+                            icon: Icon(   
+                              _obscureConfirm ? Icons.visibility : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                              _obscureConfirm = !_obscureConfirm;
+                            }
+                            );
+                          }
+                          ),
+                          hintText: 'Confirm Password',
+                          hintStyle: const TextStyle(
+                            color: Color(0xFFA3A3A3),
+                            fontSize: 32,
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFFAFCFA),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFEBECEB),
+                              width: 2,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1EADC3),
+                              width: 2,
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFCF3E3E),
+                              width: 2,
+                            ),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFCF3E3E),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        validator: (value){
+                          if (value == null || value.isEmpty || value != _passwordController.text){
+                            return 'Please enter the same password';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
@@ -200,10 +266,12 @@ class _SignupScreenState extends State<SignupScreen>{
                       SizedBox(
                         width: double.infinity, 
                         child: Button(
-                          title: 'LOGIN', 
+                          title: 'SIGN UP', 
                           onTap: () {
+                            _formKey.currentState!.validate();
                             String enteredName = _emailController.text;
                             String enteredPassword = _passwordController.text;
+                            String confirmPassword = _confirmPasswordController.text;
                             debugPrint("Password: $enteredPassword");
                             debugPrint("Email/username: $enteredName");
                         },
@@ -221,7 +289,9 @@ class _SignupScreenState extends State<SignupScreen>{
                           const SizedBox(width: 4),
                           TextButton(
                             onPressed: () {
-                              Navigator.pushReplacementNamed(context, '/login');
+                              /* if confirm and pass are same, proceed to navi and checking
+                                  else, yeah
+                              */
                             },
                             style: TextButton.styleFrom(
                               foregroundColor: const Color(0xFF1EADC3),

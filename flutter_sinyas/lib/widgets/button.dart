@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 class Button extends StatefulWidget {
   final String title;
   final VoidCallback onTap;
+  final double scale;
 
-  const Button({super.key, required this.title, required this.onTap});
+  const Button({
+    super.key,
+    required this.title,
+    required this.onTap,
+    this.scale = 1,
+  });
 
   @override
   State<Button> createState() => _ButtonState();
@@ -28,7 +34,7 @@ class _ButtonState extends State<Button> {
           duration: const Duration(milliseconds: 100),
           transform: Matrix4.translationValues(0, isPressed ? 3 : 0, 0),
           transformAlignment: Alignment.center,
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16 * widget.scale),
           decoration: BoxDecoration(
             color: const Color(0xFF4EBFD0),
             borderRadius: BorderRadius.circular(20),
@@ -52,7 +58,7 @@ class _ButtonState extends State<Button> {
                   Text(
                     widget.title,
                     style: TextStyle(
-                      fontSize: 36,
+                      fontSize: 36 * widget.scale,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       shadows: [

@@ -39,7 +39,7 @@ class ItikApp extends StatelessWidget {
           seedColor: const Color(0xFF40B9CC),
         ),
       ),
-      home: const LoginScreen(), // which screen loads first
+      home: const OnboardingScreen(), // which screen loads first
     );
   }
 }

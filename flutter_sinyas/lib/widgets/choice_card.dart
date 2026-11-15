@@ -5,6 +5,7 @@ class ChoiceCard extends StatefulWidget {
   final String subtitle;
   final bool isSelected;
   final VoidCallback onTap;
+  final double scale;
 
   const ChoiceCard({
     super.key,
@@ -12,6 +13,7 @@ class ChoiceCard extends StatefulWidget {
     required this.subtitle,
     required this.isSelected,
     required this.onTap,
+    this.scale = 1,
   });
 
   @override
@@ -30,7 +32,10 @@ class _ChoiceCardState extends State<ChoiceCard>{
       onTap: widget.onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 8 * widget.scale,
+        ),
         decoration: BoxDecoration(
           color: widget.isSelected ? const Color(0xFF4EBFD0) : Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -58,7 +63,7 @@ class _ChoiceCardState extends State<ChoiceCard>{
                   Text(
                     widget.title, 
                     style: TextStyle(
-                      fontSize: 36, 
+                      fontSize: 36 * widget.scale,
                       fontWeight: FontWeight.bold,
                       height: 1.2,
                       color: widget.isSelected ? Colors.white : const Color(0xFF002247),
@@ -74,7 +79,7 @@ class _ChoiceCardState extends State<ChoiceCard>{
                     widget.subtitle, 
                     style: TextStyle(
                       height: 1.0,
-                      fontSize: 24, 
+                      fontSize: 24 * widget.scale,
                       color: widget.isSelected ? Colors.white : const Color(0xFF002247),
                       shadows: [
                         Shadow(
