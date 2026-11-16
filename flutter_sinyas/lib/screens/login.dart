@@ -1,24 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_sinyas/widgets/grey_button.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '/widgets/button.dart';
-
-/*
-
-  Log In
-
-  SizedBox 12
-
-  email or username
-  password
-  forgot password
-
-
-  button
-  not a user yet? create an account
-  ---- or ----
-  google fb 
-
-*/
 
 class LoginScreen extends StatefulWidget{
   const LoginScreen({super.key});
@@ -41,15 +24,52 @@ class _LoginScreenState extends State<LoginScreen>{
     super.dispose();
   }
 
-  void _handleLogin() async {
-    if(_formKey.currentState!.validate()){
-      setState(() => _isLoading = true);
-      await Future.delayed(const Duration(seconds: 2));
-      if(!mounted) return;
-      setState(() => _isLoading = false);
+  Future<void> _handleLogin() async {
+    if (_isLoading || !(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final response = await Supabase.instance.client.auth.signInWithPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
+
+    final user = response.user;
+    if (user == null) {
+      throw const AuthException('Login succeeded without returning a user.');
+    }
+
+    final profile = await Supabase.instance.client
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    if (!mounted) return;
+
+    if (profile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Logged in ass ${_emailController.text}')),
+        const SnackBar(content: Text('Your profile was not found. Please contact support.')),
       );
+      return;
+    }
+
+    Navigator.pushReplacementNamed(
+      context,
+      '/home',
+      arguments: profile,
+    );
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
   @override
@@ -105,12 +125,14 @@ class _LoginScreenState extends State<LoginScreen>{
                       ),
                       TextFormField(
                         controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.email],
                         style: const TextStyle(
                           fontSize: 32,
                           color: Color(0xFF002247),
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Email or username',
+                          hintText: 'Email',
                           hintStyle: const TextStyle(
                             color: Color(0xFFA3A3A3),
                             fontSize: 32,
@@ -132,6 +154,12 @@ class _LoginScreenState extends State<LoginScreen>{
                           )
                           )
                         ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Enter your email';
+                          }
+                          return null;
+                        },
                         // color: Color(0xFFFAFCFA),
                       ),
                       const SizedBox(height: 12),
@@ -177,6 +205,12 @@ class _LoginScreenState extends State<LoginScreen>{
                           )
                           )
                         ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Enter your password';
+                          }
+                          return null;
+                        },
                         // color: Color(0xFFFAFCFA),
                       ),
                       Align(
@@ -197,13 +231,8 @@ class _LoginScreenState extends State<LoginScreen>{
                       SizedBox(
                         width: double.infinity, 
                         child: Button(
-                          title: 'LOGIN', 
-                          onTap: () {
-                            String enteredName = _emailController.text;
-                            String enteredPassword = _passwordController.text;
-                            debugPrint("Password: $enteredPassword");
-                            debugPrint("Email/username: $enteredName");
-                        },
+                          title: _isLoading ? 'SIGNING IN...' : 'LOG IN',
+                          onTap: _handleLogin,
                       ),
                       ),
                       const SizedBox(height: 12),

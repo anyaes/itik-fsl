@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_sinyas/widgets/grey_button.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '/widgets/button.dart';
 
 /*
@@ -29,6 +30,7 @@ class SignupScreen extends StatefulWidget{
 
 class _SignupScreenState extends State<SignupScreen>{
   final _formKey = GlobalKey<FormState>();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -38,24 +40,58 @@ class _SignupScreenState extends State<SignupScreen>{
 
   @override
   void dispose() {
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() async {
-    if(_formKey.currentState!.validate()){
-      setState(() => _isLoading = true);
-      await Future.delayed(const Duration(seconds: 2));
-      if(!mounted) return;
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Logged in ass ${_emailController.text}')),
+  Future<void> _handleSignUp() async {
+    if (_isLoading || !(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await signUpUser(
+        displayName: _usernameController.text,
+        email: _emailController.text,
+        password: _passwordController.text,
       );
+
+      if (!mounted) return;
+
+      if (response.session == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Check your email to confirm your account.')),
+        );
+      } else {
+        Navigator.pushReplacementNamed(context, '/onboarding');
+      }
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
+  final supabase = Supabase.instance.client;
+
+  Future<AuthResponse> signUpUser({
+    required String displayName,
+    required String email,
+    required String password,
+  }) {
+    return supabase.auth.signUp(
+      email: email.trim(),
+      password: password,
+      data: {'display_name': displayName.trim()},
+    );
+  }
+   
   @override
   Widget build(BuildContext context){
     return Scaffold(
@@ -107,6 +143,38 @@ class _SignupScreenState extends State<SignupScreen>{
                           
                         ),
                       ),
+                      TextFormField(
+                        controller: _usernameController,
+                        style: const TextStyle(
+                          fontSize: 32,
+                          color: Color(0xFF002247),
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Username',
+                          hintStyle: const TextStyle(
+                            color: Color(0xFFA3A3A3),
+                            fontSize: 32,
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFFAFCFA),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(
+                            color: Color(0xFFEBECEB),
+                            width: 2,
+                          ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(
+                            color: Color(0xFF1EADC3),
+                            width: 2,
+                          )
+                          )
+                        ),
+                        // color: Color(0xFFFAFCFA),
+                      ),
+                      const SizedBox(height: 12),
                       TextFormField(
                         controller: _emailController,
                         style: const TextStyle(
@@ -269,13 +337,26 @@ class _SignupScreenState extends State<SignupScreen>{
                           title: 'SIGN UP', 
                           onTap: () {
                             _formKey.currentState!.validate();
-                            String enteredName = _emailController.text;
+                            String enteredName = _usernameController.text;
+                            String enteredEmail = _emailController.text;
                             String enteredPassword = _passwordController.text;
                             String confirmPassword = _confirmPasswordController.text;
-                            debugPrint("Password: $enteredPassword");
-                            debugPrint("Email/username: $enteredName");
-                        },
-                      ),
+                            String finalPassword = "";
+                            if (confirmPassword==enteredPassword){
+                              debugPrint("Password: $enteredPassword");
+                              finalPassword = enteredPassword;
+                            } else {
+                              debugPrint("Passwords don't match");
+                            }
+                            debugPrint("Email: $enteredEmail");
+                            debugPrint("Username: $enteredName");
+                            signUpUser(
+                              displayName: enteredName, 
+                              email: enteredEmail, 
+                              password: finalPassword
+                            );
+                          },
+                        ),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -289,9 +370,7 @@ class _SignupScreenState extends State<SignupScreen>{
                           const SizedBox(width: 4),
                           TextButton(
                             onPressed: () {
-                              /* if confirm and pass are same, proceed to navi and checking
-                                  else, yeah
-                              */
+                              Navigator.pushReplacementNamed(context, '/login');
                             },
                             style: TextButton.styleFrom(
                               foregroundColor: const Color(0xFF1EADC3),

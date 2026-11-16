@@ -32,7 +32,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final stageWidth = math.min(constraints.maxWidth, 560.0);
+            final stageWidth = constraints.maxWidth;
             final shortScreen = constraints.maxHeight < 700;
             final horizontalPadding = stageWidth < 360 ? 16.0 : 24.0;
             final panelTop =
@@ -43,14 +43,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               220.0,
               math.min(stageWidth * 0.46, constraints.maxHeight * 0.26),
             );
-            final buttonScale = math
-                .min(
-                  1.0,
-                  math.min(stageWidth / 420.0, constraints.maxHeight / 700.0),
-                )
-                .clamp(0.65, 1.0)
-                .toDouble();
-
             return Stack(
               fit: StackFit.expand,
               children: [
@@ -83,16 +75,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                       Expanded(
                                         child: LayoutBuilder(
                                           builder: (context, pageConstraints) {
-                                            final contentWidth = math.max(
-                                              0.0,
-                                              pageConstraints.maxWidth -
-                                                  horizontalPadding * 2,
+                                            final contentWidth = math.min(
+                                              560.0,
+                                              math.max(
+                                                0.0,
+                                                pageConstraints.maxWidth -
+                                                    horizontalPadding * 2,
+                                              ),
                                             );
-                                            final designPageHeight =
+                                            final verticalPadding = shortScreen
+                                                ? 12.0
+                                                : 24.0;
+                                            final availableGroupHeight = math
+                                                .max(
+                                                  0.0,
+                                                  pageConstraints.maxHeight -
+                                                      verticalPadding * 2,
+                                                );
+                                            final designGroupHeight =
                                                 switch (onboardingStep) {
-                                                  0 => 480.0,
-                                                  1 => 410.0,
-                                                  2 => 300.0,
+                                                  0 => 620.0,
+                                                  1 => 520.0,
+                                                  2 => 360.0,
                                                   _ => 1.0,
                                                 };
                                             final scale = math
@@ -100,8 +104,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                                   1.0,
                                                   math.min(
                                                     contentWidth / 360.0,
-                                                    pageConstraints.maxHeight /
-                                                        designPageHeight,
+                                                    availableGroupHeight /
+                                                        designGroupHeight,
                                                   ),
                                                 )
                                                 .clamp(0.55, 1.0)
@@ -110,22 +114,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                             return Padding(
                                               padding: EdgeInsets.symmetric(
                                                 horizontal: horizontalPadding,
+                                                vertical: verticalPadding,
                                               ),
-                                              child: Align(
-                                                alignment:
-                                                    Alignment.bottomCenter,
-                                                child: SizedBox(
-                                                  width: contentWidth,
-                                                  child: AnimatedSwitcher(
-                                                    duration: const Duration(
-                                                      milliseconds: 450,
-                                                    ),
-                                                    switchInCurve:
-                                                        Curves.easeOutBack,
-                                                    switchOutCurve:
-                                                        Curves.easeIn,
-                                                    transitionBuilder:
-                                                        (child, animation) {
+                                              child: Center(
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    SizedBox(
+                                                      width: contentWidth,
+                                                      child: AnimatedSwitcher(
+                                                        duration:
+                                                            const Duration(
+                                                              milliseconds: 450,
+                                                            ),
+                                                        switchInCurve:
+                                                            Curves.easeOutBack,
+                                                        switchOutCurve:
+                                                            Curves.easeIn,
+                                                        transitionBuilder: (child, animation) {
                                                           final scaleAnimation =
                                                               Tween<double>(
                                                                 begin: 0.92,
@@ -143,265 +150,282 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                                             ),
                                                           );
                                                         },
-                                                    child: switch (onboardingStep) {
-                                                      0 => Column(
-                                                        key: const ValueKey(0),
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        children: [
-                                                          SizedBox(
-                                                            height: 24 * scale,
-                                                          ),
-                                                          Text(
-                                                            'I am...',
-                                                            style: TextStyle(
-                                                              color:
-                                                                  const Color(
+                                                        child: switch (onboardingStep) {
+                                                          0 => Column(
+                                                            key: const ValueKey(
+                                                              0,
+                                                            ),
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              SizedBox(
+                                                                height:
+                                                                    24 * scale,
+                                                              ),
+                                                              Text(
+                                                                'I am...',
+                                                                style: TextStyle(
+                                                                  color: const Color(
                                                                     0xFF002247,
                                                                   ),
-                                                              fontSize:
-                                                                  80 * scale,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                              height: 0.8,
-                                                            ),
-                                                          ),
-                                                          Text(
-                                                            'Choose which best describes you as a learner. There are no right or wrong answers.',
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style: TextStyle(
-                                                              color:
-                                                                  const Color(
+                                                                  fontSize:
+                                                                      80 *
+                                                                      scale,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  height: 0.8,
+                                                                ),
+                                                              ),
+                                                              Text(
+                                                                'Choose which best describes you as a learner. There are no right or wrong answers.',
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                                style: TextStyle(
+                                                                  color: const Color(
                                                                     0xFF002247,
                                                                   ),
-                                                              fontSize:
-                                                                  24 * scale,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w300,
-                                                              height: 1,
+                                                                  fontSize:
+                                                                      24 *
+                                                                      scale,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w300,
+                                                                  height: 1,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                height: 12,
+                                                              ),
+                                                              ChoiceCard(
+                                                                title:
+                                                                    learnerTypes[0],
+                                                                subtitle:
+                                                                    'I\'m learning FSL to support someone in my household.',
+                                                                isSelected:
+                                                                    selectedIndex ==
+                                                                    0,
+                                                                scale: scale,
+                                                                onTap: () =>
+                                                                    setState(
+                                                                      () =>
+                                                                          selectedIndex =
+                                                                              0,
+                                                                    ),
+                                                              ),
+                                                              const SizedBox(
+                                                                height: 12,
+                                                              ),
+                                                              ChoiceCard(
+                                                                title:
+                                                                    learnerTypes[1],
+                                                                subtitle:
+                                                                    'I want to learn FSL to communicate as a need.',
+                                                                isSelected:
+                                                                    selectedIndex ==
+                                                                    1,
+                                                                scale: scale,
+                                                                onTap: () =>
+                                                                    setState(
+                                                                      () =>
+                                                                          selectedIndex =
+                                                                              1,
+                                                                    ),
+                                                              ),
+                                                              const SizedBox(
+                                                                height: 12,
+                                                              ),
+                                                              ChoiceCard(
+                                                                title:
+                                                                    learnerTypes[2],
+                                                                subtitle:
+                                                                    'I just want to learn FSL on my own.',
+                                                                isSelected:
+                                                                    selectedIndex ==
+                                                                    2,
+                                                                scale: scale,
+                                                                onTap: () =>
+                                                                    setState(
+                                                                      () =>
+                                                                          selectedIndex =
+                                                                              2,
+                                                                    ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          1 => Column(
+                                                            key: const ValueKey(
+                                                              1,
                                                             ),
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              SizedBox(
+                                                                height:
+                                                                    24 * scale,
+                                                              ),
+                                                              Text(
+                                                                'How much do you know?',
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                                style: TextStyle(
+                                                                  color: const Color(
+                                                                    0xFF002247,
+                                                                  ),
+                                                                  fontSize:
+                                                                      80 *
+                                                                      scale,
+                                                                  height: 0.8,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                height: 8,
+                                                              ),
+                                                              Text(
+                                                                'Do you know any FSL or are you completely new?',
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                                style: TextStyle(
+                                                                  color: const Color(
+                                                                    0xFF002247,
+                                                                  ),
+                                                                  fontSize:
+                                                                      24 *
+                                                                      scale,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w300,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                height: 12,
+                                                              ),
+                                                              ChoiceCard(
+                                                                title:
+                                                                    knowledgeLevels[0],
+                                                                subtitle:
+                                                                    'Start with the basics and learn step by step.',
+                                                                isSelected:
+                                                                    selectedKnowledgeIndex ==
+                                                                    0,
+                                                                scale: scale,
+                                                                onTap: () =>
+                                                                    setState(
+                                                                      () =>
+                                                                          selectedKnowledgeIndex =
+                                                                              0,
+                                                                    ),
+                                                              ),
+                                                              const SizedBox(
+                                                                height: 12,
+                                                              ),
+                                                              ChoiceCard(
+                                                                title:
+                                                                    knowledgeLevels[1],
+                                                                subtitle:
+                                                                    'Answer a few questions to find your starting point.',
+                                                                isSelected:
+                                                                    selectedKnowledgeIndex ==
+                                                                    1,
+                                                                scale: scale,
+                                                                onTap: () =>
+                                                                    setState(
+                                                                      () =>
+                                                                          selectedKnowledgeIndex =
+                                                                              1,
+                                                                    ),
+                                                              ),
+                                                            ],
                                                           ),
-                                                          const SizedBox(
-                                                            height: 12,
-                                                          ),
-                                                          ChoiceCard(
-                                                            title:
-                                                                learnerTypes[0],
-                                                            subtitle:
-                                                                'I\'m learning FSL to support someone in my household.',
-                                                            isSelected:
-                                                                selectedIndex ==
-                                                                0,
-                                                            scale: scale,
-                                                            onTap: () => setState(
-                                                              () =>
-                                                                  selectedIndex =
-                                                                      0,
+                                                          2 => Column(
+                                                            key: const ValueKey(
+                                                              2,
                                                             ),
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              SizedBox(
+                                                                height:
+                                                                    24 * scale,
+                                                              ),
+                                                              Text(
+                                                                'That\'s cool!',
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                                style: TextStyle(
+                                                                  color: const Color(
+                                                                    0xFF002247,
+                                                                  ),
+                                                                  fontSize:
+                                                                      80 *
+                                                                      scale,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                height: 8,
+                                                              ),
+                                                              if (selectedKnowledgeIndex ==
+                                                                  null)
+                                                                const Text(
+                                                                  'Choose a knowledge level',
+                                                                )
+                                                              else if (selectedKnowledgeIndex ==
+                                                                  0)
+                                                                const Text(
+                                                                  'Show content for beginners',
+                                                                )
+                                                              else
+                                                                const Text(
+                                                                  'Aaaaaaaaaaaa',
+                                                                ),
+                                                            ],
                                                           ),
-                                                          const SizedBox(
-                                                            height: 12,
-                                                          ),
-                                                          ChoiceCard(
-                                                            title:
-                                                                learnerTypes[1],
-                                                            subtitle:
-                                                                'I want to learn FSL to communicate as a need.',
-                                                            isSelected:
-                                                                selectedIndex ==
-                                                                1,
-                                                            scale: scale,
-                                                            onTap: () => setState(
-                                                              () =>
-                                                                  selectedIndex =
-                                                                      1,
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 12,
-                                                          ),
-                                                          ChoiceCard(
-                                                            title:
-                                                                learnerTypes[2],
-                                                            subtitle:
-                                                                'I just want to learn FSL on my own.',
-                                                            isSelected:
-                                                                selectedIndex ==
-                                                                2,
-                                                            scale: scale,
-                                                            onTap: () => setState(
-                                                              () =>
-                                                                  selectedIndex =
-                                                                      2,
-                                                            ),
-                                                          ),
-                                                        ],
+                                                          _ =>
+                                                            const SizedBox.shrink(),
+                                                        },
                                                       ),
-                                                      1 => Column(
-                                                        key: const ValueKey(1),
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        children: [
-                                                          SizedBox(
-                                                            height: 24 * scale,
-                                                          ),
-                                                          Text(
-                                                            'How much do you know?',
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style: TextStyle(
-                                                              color:
-                                                                  const Color(
-                                                                    0xFF002247,
-                                                                  ),
-                                                              fontSize:
-                                                                  80 * scale,
-                                                              height: 0.8,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 8,
-                                                          ),
-                                                          Text(
-                                                            'Do you know any FSL or are you completely new?',
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style: TextStyle(
-                                                              color:
-                                                                  const Color(
-                                                                    0xFF002247,
-                                                                  ),
-                                                              fontSize:
-                                                                  24 * scale,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w300,
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 12,
-                                                          ),
-                                                          ChoiceCard(
-                                                            title:
-                                                                knowledgeLevels[0],
-                                                            subtitle:
-                                                                'Start with the basics and learn step by step.',
-                                                            isSelected:
-                                                                selectedKnowledgeIndex ==
-                                                                0,
-                                                            scale: scale,
-                                                            onTap: () => setState(
-                                                              () =>
-                                                                  selectedKnowledgeIndex =
-                                                                      0,
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 12,
-                                                          ),
-                                                          ChoiceCard(
-                                                            title:
-                                                                knowledgeLevels[1],
-                                                            subtitle:
-                                                                'Answer a few questions to find your starting point.',
-                                                            isSelected:
-                                                                selectedKnowledgeIndex ==
-                                                                1,
-                                                            scale: scale,
-                                                            onTap: () => setState(
-                                                              () =>
-                                                                  selectedKnowledgeIndex =
-                                                                      1,
-                                                            ),
-                                                          ),
-                                                        ],
+                                                    ),
+                                                    const SizedBox(height: 30),
+                                                    SizedBox(
+                                                      width: contentWidth,
+                                                      child: Button(
+                                                        title: 'CONTINUE',
+                                                        scale: scale,
+                                                        onTap: () => setState(() {
+                                                          final knowledgeLevel =
+                                                              selectedKnowledgeIndex ==
+                                                                  null
+                                                              ? 'not selected'
+                                                              : knowledgeLevels[selectedKnowledgeIndex!];
+
+                                                          debugPrint(
+                                                            'Learner type: ${learnerTypes[selectedIndex]}',
+                                                          );
+                                                          debugPrint(
+                                                            'Knowledge level: $knowledgeLevel',
+                                                          );
+                                                          onboardingStep++;
+                                                        }),
                                                       ),
-                                                      2 => Column(
-                                                        key: const ValueKey(2),
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        children: [
-                                                          SizedBox(
-                                                            height: 24 * scale,
-                                                          ),
-                                                          Text(
-                                                            'That\'s cool!',
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style: TextStyle(
-                                                              color:
-                                                                  const Color(
-                                                                    0xFF002247,
-                                                                  ),
-                                                              fontSize:
-                                                                  80 * scale,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                            ),
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 8,
-                                                          ),
-                                                          if (selectedKnowledgeIndex ==
-                                                              null)
-                                                            const Text(
-                                                              'Choose a knowledge level',
-                                                            )
-                                                          else if (selectedKnowledgeIndex ==
-                                                              0)
-                                                            const Text(
-                                                              'Show content for beginners',
-                                                            )
-                                                          else
-                                                            const Text(
-                                                              'Aaaaaaaaaaaa',
-                                                            ),
-                                                        ],
-                                                      ),
-                                                      _ =>
-                                                        const SizedBox.shrink(),
-                                                    },
-                                                  ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             );
                                           },
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.fromLTRB(
-                                          horizontalPadding,
-                                          30,
-                                          horizontalPadding,
-                                          shortScreen ? 12 : 24,
-                                        ),
-                                        child: SizedBox(
-                                          width: double.infinity,
-                                          child: Button(
-                                            title: 'CONTINUE',
-                                            scale: buttonScale,
-                                            onTap: () => setState(() {
-                                              final knowledgeLevel =
-                                                  selectedKnowledgeIndex == null
-                                                  ? 'not selected'
-                                                  : knowledgeLevels[selectedKnowledgeIndex!];
-
-                                              debugPrint(
-                                                'Learner type: ${learnerTypes[selectedIndex]}',
-                                              );
-                                              debugPrint(
-                                                'Knowledge level: $knowledgeLevel',
-                                              );
-                                              onboardingStep++;
-                                            }),
-                                          ),
                                         ),
                                       ),
                                     ],
