@@ -1,47 +1,87 @@
 import 'package:flutter/material.dart';
-import 'package:gradient_progress_bar/gradient_progress_bar.dart';
 
-class HomeScreen extends StatefulWidget{
+import 'package:flutter_sinyas/screens/downloads_screen.dart';
+import 'package:flutter_sinyas/screens/lessons_page.dart';
+import 'package:flutter_sinyas/screens/profile_screen.dart';
+import 'package:flutter_sinyas/screens/settings_screen.dart';
+import 'package:flutter_sinyas/screens/tracks_screen.dart';
+import 'package:flutter_sinyas/widgets/app_bar.dart';
+import 'package:flutter_sinyas/widgets/nav_item.dart';
+import 'package:flutter_sinyas/widgets/side_panel.dart';
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>{
+final List<NavItem> _navItems = const [
+  NavItem(svgAsset: 'lesson.svg', label: 'Lessons'),
+  NavItem(svgAsset: 'track.svg', label: 'Tracks'),
+  NavItem(svgAsset: 'downloads.svg', label: 'Downloads'),
+  NavItem(svgAsset: 'profile.svg', label: 'Profile'),
+  NavItem(svgAsset: 'settings.svg', label: 'Settings'),
+];
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+
+  void _onItemSelected(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  Widget _buildSelectedPage() {
+    return IndexedStack(
+      index: _selectedIndex,
+      sizing: StackFit.expand,
+      children: [
+        LessonsPage(onTracksSelected: () => _onItemSelected(1)),
+        const TracksScreen(),
+        const DownloadsScreen(),
+        const ProfileScreen(),
+        const SettingsScreen(),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Positioned(
-            top: 16,
-            left: 16,
-            right: 16,
-            child: Row(
-              children: [
-                IconButton(
-                icon: Icon(Icons.arrow_back),
-                iconSize: 26,
-                color: const Color.fromARGB(255, 116, 79, 79),
-                onPressed: () {
-                  debugPrint('hey');
-                },
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 2. Check maxWidth (< 600 = Mobile, >= 600 = Tablet)
+        final bool isMobile = constraints.maxWidth < 600;
+
+        if (!isMobile) {
+          // TABLET VIEW
+          return Scaffold(
+            body: SafeArea(
+              child: Row(
+                children: [
+                  SidePanel(
+                    items: _navItems,
+                    selectedIndex: _selectedIndex,
+                    onItemSelected: _onItemSelected, // 3. Pass the callback
+                  ),
+                  Expanded(child: _buildSelectedPage()),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GradientProgressIndicator([
-                Color(0xFFFFAA2E),
-                Color(0xFFFFD75D)
-              ], 1)
-              ),
-              const SizedBox(width: 12),
-              ]
-            )
-          )
-        ],
-      )
+            ),
+          );
+        }
+
+        // MOBILE VIEW
+        return Scaffold(
+          body: SafeArea(child: _buildSelectedPage()),
+          bottomNavigationBar: AppBottomBar(
+            items: _navItems,
+            selectedIndex: _selectedIndex,
+            onItemSelected: _onItemSelected,
+          ),
+        );
+      },
     );
   }
 }
-

@@ -46,3 +46,18 @@ app.*.map.json
 
 # JSON ENV
 env.json
+
+/supabase
+/supabase/
+supabase/*
+/supabase/setup_access.sql
+!/supabase/demo_seed.sql
+!/supabase/DEMO_SETUP.md
+!/supabase/demo_media/
+supabase/demo_media/*
+!/supabase/demo_media/hello.svg
+!/supabase/demo_media/demo-video.mp4
+
+/services
+supabase_service.dart
+sign_api.dart
