@@ -31,6 +31,11 @@ class _TracksScreenState extends State<TracksScreen> {
     return _PageFrame(
       title: 'Tracks',
       subtitle: 'Choose a learning path and continue at your pace.',
+      headerAction: TextButton.icon(
+        onPressed: () => Navigator.of(context).pushNamed('/quiz-demo'),
+        icon: const Icon(Icons.preview_outlined),
+        label: const Text('Preview'),
+      ),
       onRefresh: _reload,
       child: FutureBuilder<List<LearningTrack>>(
         future: _tracks,
@@ -389,12 +394,14 @@ class _PageFrame extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.child,
+    this.headerAction,
     this.onRefresh,
   });
 
   final String title;
   final String subtitle;
   final Widget child;
+  final Widget? headerAction;
   final VoidCallback? onRefresh;
 
   @override
@@ -411,13 +418,20 @@ class _PageFrame extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Color(0xFF002247),
-                      fontSize: 42,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            color: Color(0xFF002247),
+                            fontSize: 42,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      ?headerAction,
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(

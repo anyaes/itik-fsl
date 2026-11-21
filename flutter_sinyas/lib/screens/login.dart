@@ -300,6 +300,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      TextButton.icon(
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/quiz-demo'),
+                        icon: const Icon(Icons.preview_outlined),
+                        label: const Text('Preview lesson layouts'),
+                      ),
                     ],
                   ),
                 ),

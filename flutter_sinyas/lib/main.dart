@@ -5,6 +5,7 @@ import '/screens/home_screen.dart';
 import '/screens/lesson_screen.dart';
 import '/screens/login.dart';
 import '/screens/onboarding_screen.dart';
+import '/screens/quiz_demo_screen.dart';
 import '/screens/signup.dart';
 import '/screens/video_test.dart';
 import '/screens/lesson_quiz_screen.dart';
@@ -86,6 +87,7 @@ class _ItikAppState extends State<ItikApp> {
         '/login': (BuildContext context) => const LoginScreen(),
         '/signup': (BuildContext context) => const SignupScreen(),
         '/onboarding': (BuildContext context) => const OnboardingScreen(),
+        '/quiz-demo': (BuildContext context) => const QuizDemoScreen(),
         '/lesson': (BuildContext context) {
           if (Supabase.instance.client.auth.currentUser == null) {
             return const LoginScreen();

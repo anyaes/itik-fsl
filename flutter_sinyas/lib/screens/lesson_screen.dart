@@ -4,15 +4,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../demo/demo_quiz_data.dart';
 import '../models/sign.dart';
 import '../services/supabase_service.dart';
+import '../widgets/decorative_panel.dart';
+import '../widgets/demo_video_preview.dart';
 import '../widgets/supabase_image.dart';
 import '../widgets/video_player.dart';
 
 class LessonScreen extends StatefulWidget {
-  const LessonScreen({super.key, required this.lessonId});
+  const LessonScreen({super.key, required this.lessonId}) : isDemo = false;
+
+  const LessonScreen.demo({super.key}) : lessonId = null, isDemo = true;
 
   final int? lessonId;
+  final bool isDemo;
 
   @override
   State<LessonScreen> createState() => _LessonScreenState();
@@ -42,6 +48,15 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   Future<_LessonData> _loadLesson() async {
+    if (widget.isDemo) {
+      return _LessonData(
+        title: 'UNIT 1  •  FOUNDATIONS',
+        signs: [
+          Sign(id: 1, name: 'Salamat - Thank you!', category: 'Greetings'),
+        ],
+      );
+    }
+
     final lessonId = widget.lessonId;
     if (lessonId == null) {
       throw StateError('Open a lesson from the Tracks screen to begin.');
@@ -58,11 +73,12 @@ class _LessonScreenState extends State<LessonScreen> {
     if (_isCompleting || _isCompleted) return;
     setState(() => _isCompleting = true);
     try {
-      if (Supabase.instance.client.auth.currentUser != null) {
+      if (!widget.isDemo && Supabase.instance.client.auth.currentUser != null) {
         await _service.completeLesson(widget.lessonId!, 1);
       }
       if (!mounted) return;
       setState(() => _isCompleted = true);
+      if (widget.isDemo) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -86,7 +102,7 @@ class _LessonScreenState extends State<LessonScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4FAFB),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: FutureBuilder<_LessonData>(
           future: _lessonData,
@@ -101,145 +117,193 @@ class _LessonScreenState extends State<LessonScreen> {
             final sign = lesson.signs[_currentSignIndex];
             final isLast = _currentSignIndex == lesson.signs.length - 1;
 
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                final scale = (constraints.maxWidth / 390)
-                    .clamp(0.85, 1.25)
-                    .toDouble();
-                return Column(
-                  children: [
-                    Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
-                    child: Row(
-                      children: [
-                        const SizedBox(height: 20),
-                        IconButton(
-                          tooltip: 'Back to tracks',
-                          onPressed: () => Navigator.maybePop(context),
-                          icon: const Icon(Icons.arrow_back_rounded),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: GradientProgressIndicator(
-                            [const Color(0xFFFFAA2E), const Color(0xFFFFD75D)],
-                            (_currentSignIndex + 1) / lesson.signs.length,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        SvgPicture.asset('assets/FeatherHeart.svg', width: 24, height: 24),
-                        const SizedBox(width: 14),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: 14),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 700),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                if (sign.videoPath case final videoPath?)
-                                  VideoContainer(
-                                    bucketName: SupabaseService.mediaBucket,
-                                    filePath: 'videos/h2h_1.mp4',
-                                    maxWidth: 700,
-                                    autoPlay: _autoPlayVideos,
-                                  )
-                                else if (sign.photoPath case final photoPath?)
-                                  SupabaseImage(path: photoPath, height: 280)
-                                else
-                                  const _NoMediaCard(),
-                                const SizedBox(height: 20),
-                                Text(
-                                  lesson.title,
-                                  style: TextStyle(
-                                    color: const Color(0xFF526D76),
-                                    fontSize: 18 * scale,
-                                  ),
-                                ),
-                                Text(
-                                  sign.name,
-                                  style: TextStyle(
-                                    color: const Color(0xFF002247),
-                                    fontSize: 34 * scale,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                if (sign.category != null)
-                                  Text(
-                                    sign.category!,
-                                    style: const TextStyle(
-                                      color: Color(0xFF16899F),
-                                      fontSize: 18,
-                                    ),
-                                  ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  '${_currentSignIndex + 1} of ${lesson.signs.length}',
-                                  style: const TextStyle(
-                                    color: Color(0xFF526D76),
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: _currentSignIndex == 0
-                                            ? null
-                                            : () => setState(
-                                                () => _currentSignIndex--,
-                                              ),
-                                        child: const Text('BACK'),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: FilledButton(
-                                        onPressed: _isCompleting
-                                            ? null
-                                            : isLast
-                                            ? () => _completeLesson(
-                                                lesson.signs.length,
-                                              )
-                                            : () => setState(
-                                                () => _currentSignIndex++,
-                                              ),
-                                        child: _isCompleting
-                                            ? const SizedBox(
-                                                width: 20,
-                                                height: 20,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                    ),
-                                              )
-                                            : Text(
-                                                _isCompleted
-                                                    ? 'COMPLETED'
-                                                    : isLast
-                                                    ? 'FINISH LESSON'
-                                                    : 'NEXT SIGN',
-                                              ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+            return Column(
+              children: [
+                _buildHeader(lesson.signs.length),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 900),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (widget.isDemo)
+                              const DemoVideoPreview(videoUrl: demoVideoUrl)
+                            else if (sign.videoPath case final videoPath?)
+                              VideoContainer(
+                                bucketName: SupabaseService.mediaBucket,
+                                filePath: videoPath,
+                                maxWidth: 900,
+                                autoPlay: _autoPlayVideos,
+                              )
+                            else if (sign.photoPath case final photoPath?)
+                              SupabaseImage(path: photoPath, height: 280)
+                            else
+                              const _NoMediaCard(),
+                            const SizedBox(height: 14),
+                            Text(
+                              lesson.title,
+                              style: const TextStyle(
+                                color: Color(0xFF526D76),
+                                fontSize: 18,
+                              ),
                             ),
-                          ),
+                            Text(
+                              sign.name,
+                              style: const TextStyle(
+                                color: Color(0xFF002247),
+                                fontSize: 32,
+                                height: 1,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'This is the sign for ${sign.name}. Watch the handshape and movement closely.',
+                              style: const TextStyle(
+                                color: Color(0xFF002247),
+                                fontSize: 18,
+                                height: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            _buildTip(sign),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                );
-              },
+                  ),
+                ),
+                _buildContinueBar(isLast),
+              ],
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(int signCount) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 950),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: Row(
+            children: [
+              IconButton(
+                tooltip: 'Back to tracks',
+                onPressed: () => Navigator.maybePop(context),
+                icon: const Icon(Icons.arrow_back_rounded),
+                color: const Color(0xFF002247),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: GradientProgressIndicator(const [
+                  Color(0xFFFFAA2E),
+                  Color(0xFFFFD75D),
+                ], (_currentSignIndex + 1) / signCount),
+              ),
+              const SizedBox(width: 12),
+              SvgPicture.asset(
+                'assets/FeatherHeart.svg',
+                width: 22,
+                height: 22,
+              ),
+              const SizedBox(width: 5),
+              const Text(
+                '3',
+                style: TextStyle(
+                  color: Color(0xFFFFAA2E),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTip(Sign sign) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE7F8FB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFC9EEF4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.lightbulb_outline_rounded,
+            color: Color(0xFF002247),
+            size: 22,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'A tip! Focus on the handshape and movement for ${sign.name}.',
+              style: const TextStyle(
+                color: Color(0xFF002247),
+                fontSize: 17,
+                height: 1,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContinueBar(bool isLast) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0xFFE5E5E5))),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 950),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: SizedBox(
+                width: 230,
+                height: 48,
+                child: FilledButton(
+                  onPressed: _isCompleting
+                      ? null
+                      : isLast
+                      ? () => _completeLesson(1)
+                      : () => setState(() => _currentSignIndex++),
+                  child: _isCompleting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          _isCompleted
+                              ? 'COMPLETED'
+                              : isLast
+                              ? 'FINISH LESSON'
+                              : 'CONTINUE',
+                        ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -291,14 +355,13 @@ class _NoMediaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 220,
-      decoration: BoxDecoration(
-        color: const Color(0xFFE5F7F9),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: const Center(
-        child: Text('Add a photo or video path for this sign in Supabase.'),
+    return const DecorativePanel(
+      padding: EdgeInsets.all(28),
+      child: SizedBox(
+        height: 164,
+        child: Center(
+          child: Text('Add a photo or video path for this sign in Supabase.'),
+        ),
       ),
     );
   }

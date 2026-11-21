@@ -8,47 +8,72 @@ import '../models/sign.dart';
 import '../services/supabase_service.dart';
 import '../widgets/choice_style_card.dart';
 import '../widgets/decorative_panel.dart';
+import '../widgets/demo_video_preview.dart';
 import '../widgets/supabase_image.dart';
 import '../widgets/video_player.dart';
 
 class LessonQuizScreen extends StatefulWidget {
   final int lessonId;
   final String lessonName;
+  final LessonQuestion? demoQuestion;
+  final Map<int, String> demoVideoLinks;
 
   const LessonQuizScreen({
     super.key,
     required this.lessonId,
     this.lessonName = 'Lesson',
-  });
+  }) : demoQuestion = null,
+       demoVideoLinks = const {};
+
+  const LessonQuizScreen.demo({
+    super.key,
+    required LessonQuestion question,
+    this.lessonName = 'Question preview',
+    this.demoVideoLinks = const {},
+  }) : lessonId = 0,
+       demoQuestion = question;
 
   @override
   State<LessonQuizScreen> createState() => _LessonQuizScreenState();
 }
 
 class _LessonQuizScreenState extends State<LessonQuizScreen> {
-  late final LessonController _controller;
+  LessonController? _controller;
   int _lives = 3;
   bool _isCorrectAnswer = false;
   bool _isRecordingAnswer = false;
   bool _isSubmitting = false;
   int? _selectedAnswerId;
   String? _tip;
+  bool _demoFinished = false;
+  int _demoTotalAnswered = 0;
+  int _demoCorrectCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _controller = LessonController(lessonId: widget.lessonId)
-      ..addListener(() {
-        if (mounted) setState(() {});
-      });
-    _controller.initLesson();
+    if (widget.demoQuestion == null) {
+      _controller = LessonController(lessonId: widget.lessonId)
+        ..addListener(() {
+          if (mounted) setState(() {});
+        });
+      _controller!.initLesson();
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
+
+  LessonQuestion? get _currentQuestion => widget.demoQuestion == null
+      ? _controller?.currentQuestion
+      : _demoFinished
+      ? null
+      : widget.demoQuestion;
+
+  bool get _isLoading => _controller?.isLoading ?? false;
 
   Future<void> _answer(Sign sign, LessonQuestion question) async {
     if (_isCorrectAnswer || _isRecordingAnswer || _isSubmitting) return;
@@ -67,8 +92,15 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
       _tip = 'A tip! Watch the handshape and movement closely, then try again.';
       _isRecordingAnswer = true;
     });
+    if (widget.demoQuestion != null) {
+      setState(() {
+        _demoTotalAnswered++;
+        _isRecordingAnswer = false;
+      });
+      return;
+    }
     try {
-      await _controller.recordIncorrectAnswer();
+      await _controller!.recordIncorrectAnswer();
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -82,9 +114,17 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
 
   Future<void> _continue() async {
     if (_isSubmitting) return;
+    if (widget.demoQuestion != null) {
+      setState(() {
+        _demoTotalAnswered++;
+        _demoCorrectCount++;
+        _demoFinished = true;
+      });
+      return;
+    }
     setState(() => _isSubmitting = true);
     try {
-      await _controller.submitAnswer(true);
+      await _controller!.submitAnswer(true);
       if (mounted) {
         setState(() {
           _isCorrectAnswer = false;
@@ -104,6 +144,13 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
   }
 
   Widget _mediaFor(Sign sign, {double maxWidth = 480, double height = 240}) {
+    final demoVideoUrl = widget.demoVideoLinks[sign.id];
+    if (demoVideoUrl != null) {
+      return DemoVideoPreview(
+        videoUrl: demoVideoUrl,
+        aspectRatio: maxWidth / height,
+      );
+    }
     if (sign.videoPath != null) {
       return VideoContainer(
         bucketName: SupabaseService.mediaBucket,
@@ -130,21 +177,22 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
   }
 
   double _getProgress() {
-    final queueLen = _controller.queue.length;
+    if (widget.demoQuestion != null) return _isCorrectAnswer ? 0.62 : 0.35;
+    final queueLen = _controller?.queue.length ?? 0;
     if (queueLen == 0) return 0.0;
-    return (_controller.currentIndex / queueLen).clamp(0.0, 1.0);
+    return ((_controller?.currentIndex ?? 0) / queueLen).clamp(0.0, 1.0);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_controller.isLoading) {
+    if (_isLoading) {
       return const Scaffold(
         backgroundColor: Colors.white,
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    final question = _controller.currentQuestion;
+    final question = _currentQuestion;
     if (question == null) return _buildFinished(context);
 
     return Scaffold(
@@ -157,8 +205,6 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final isWide = constraints.maxWidth >= 760;
-                  final media = _buildMediaPanel(question);
-                  final prompt = _buildQuestionPanel(question);
                   return SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
                     child: Center(
@@ -167,24 +213,7 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            if (isWide)
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(flex: 5, child: media),
-                                  const SizedBox(width: 32),
-                                  Expanded(flex: 6, child: prompt),
-                                ],
-                              )
-                            else
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  media,
-                                  const SizedBox(height: 22),
-                                  prompt,
-                                ],
-                              ),
+                            _buildQuestionLayout(question, isWide: isWide),
                             if (_tip != null) ...[
                               const SizedBox(height: 24),
                               _buildTipPanel(_tip!),
@@ -256,34 +285,211 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
     );
   }
 
-  Widget _buildMediaPanel(LessonQuestion question) {
-    final Widget content;
-    if (question.mode == QuestionMode.textToVideo) {
-      content = Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.sign_language_rounded,
-            color: Color(0xFF002247),
-            size: 48,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            question.targetSign.name,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF002247),
-              fontSize: 28,
-              height: 1,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+  Widget _buildQuestionLayout(LessonQuestion question, {required bool isWide}) {
+    return switch (question.mode) {
+      QuestionMode.videoToText || QuestionMode.photoToText =>
+        _buildMediaChoiceLayout(question, isWide: isWide),
+      QuestionMode.textToVideo => _buildTextToVideoLayout(question),
+      QuestionMode.cameraSign => _buildCameraLayout(question),
+    };
+  }
+
+  Widget _buildMediaChoiceLayout(
+    LessonQuestion question, {
+    required bool isWide,
+  }) {
+    final media =
+        widget.demoQuestion != null && question.mode == QuestionMode.photoToText
+        ? _buildDemoPhotoPanel()
+        : _buildMediaPanel(question);
+    final prompt = _buildQuestionPanel(question);
+    if (!isWide) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [media, const SizedBox(height: 22), prompt],
       );
-    } else {
-      content = _mediaFor(question.targetSign);
     }
 
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(flex: 5, child: media),
+        const SizedBox(width: 32),
+        Expanded(flex: 6, child: prompt),
+      ],
+    );
+  }
+
+  Widget _buildDemoPhotoPanel() {
+    return DecorativePanel(
+      padding: EdgeInsets.zero,
+      child: SizedBox(
+        height: 250,
+        width: double.infinity,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: const ColoredBox(
+            color: Color(0xFFFAFCFA),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.image_outlined, color: Color(0xFF16899F), size: 54),
+                SizedBox(height: 8),
+                Text(
+                  'Sample sign photo',
+                  style: TextStyle(color: Color(0xFF526D76), fontSize: 18),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextToVideoLayout(LessonQuestion question) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Choose the correct...',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Color(0xFF002247),
+            fontSize: 32,
+            height: 1,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'Which video demonstrates how to sign the word below?',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Color(0xFF002247), fontSize: 18, height: 1),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          '“${question.targetSign.name}”',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Color(0xFF002247),
+            fontSize: 54,
+            height: 1,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 26),
+        _buildVideoChoices(question),
+      ],
+    );
+  }
+
+  Widget _buildVideoChoices(LessonQuestion question) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth >= 760
+            ? 196.0
+            : (constraints.maxWidth - 12) / 2;
+        return Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            for (var index = 0; index < question.options.length; index++)
+              SizedBox(
+                width: width,
+                child: ChoiceStyleCard(
+                  isSelected: _selectedAnswerId == question.options[index].id,
+                  onTap: _isRecordingAnswer || _isSubmitting
+                      ? () {}
+                      : () => _answer(question.options[index], question),
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: _mediaFor(
+                          question.options[index],
+                          maxWidth: width - 24,
+                          height: width - 24,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Video ${index + 1}',
+                        style: TextStyle(
+                          color: _selectedAnswerId == question.options[index].id
+                              ? Colors.white
+                              : const Color(0xFF002247),
+                          fontSize: 18,
+                          height: 1,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCameraLayout(LessonQuestion question) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Practice this sign',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF002247),
+                fontSize: 34,
+                height: 1,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Sign “${question.targetSign.name}”, then continue when you are ready.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFF002247),
+                fontSize: 19,
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 20),
+            DecorativePanel(
+              padding: const EdgeInsets.all(28),
+              child: const Column(
+                children: [
+                  Icon(
+                    Icons.videocam_outlined,
+                    color: Color(0xFF16899F),
+                    size: 72,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Camera practice preview',
+                    style: TextStyle(color: Color(0xFF526D76), fontSize: 20),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            _buildCameraActions(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMediaPanel(LessonQuestion question) {
     return DecorativePanel(
       padding: EdgeInsets.zero,
       child: SizedBox(
@@ -293,7 +499,7 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
           borderRadius: BorderRadius.circular(16),
           child: ColoredBox(
             color: const Color(0xFFFAFCFA),
-            child: Center(child: content),
+            child: Center(child: _mediaFor(question.targetSign)),
           ),
         ),
       ),
@@ -301,26 +507,12 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
   }
 
   Widget _buildQuestionPanel(LessonQuestion question) {
-    final isTextChoice =
-        question.mode == QuestionMode.videoToText ||
-        question.mode == QuestionMode.photoToText;
-    final heading = question.mode == QuestionMode.cameraSign
-        ? 'Practice this sign'
-        : question.mode == QuestionMode.textToVideo
-        ? 'Choose the sign'
-        : 'Choose the correct answer';
-    final subtitle = question.mode == QuestionMode.textToVideo
-        ? 'Find the sign for “${question.targetSign.name}”.'
-        : question.mode == QuestionMode.cameraSign
-        ? 'Sign it clearly, then continue when you are ready.'
-        : 'What does this sign demonstrate?';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          heading,
-          style: const TextStyle(
+        const Text(
+          'Choose the correct...',
+          style: TextStyle(
             color: Color(0xFF002247),
             fontSize: 32,
             height: 1,
@@ -328,13 +520,9 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        Text(
-          subtitle,
-          style: const TextStyle(
-            color: Color(0xFF002247),
-            fontSize: 18,
-            height: 1.1,
-          ),
+        const Text(
+          'This sign demonstrates what?',
+          style: TextStyle(color: Color(0xFF002247), fontSize: 18, height: 1),
         ),
         const SizedBox(height: 16),
         if (question.isRetry)
@@ -349,12 +537,7 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
               ),
             ),
           ),
-        if (question.mode == QuestionMode.cameraSign)
-          _buildCameraActions()
-        else if (isTextChoice)
-          _buildTextOptions(question)
-        else
-          _buildMediaOptions(question),
+        _buildTextOptions(question),
       ],
     );
   }
@@ -394,46 +577,6 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
     );
   }
 
-  Widget _buildMediaOptions(LessonQuestion question) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: [
-        for (final option in question.options)
-          SizedBox(
-            width: 150,
-            child: ChoiceStyleCard(
-              isSelected: _selectedAnswerId == option.id,
-              onTap: _isRecordingAnswer || _isSubmitting
-                  ? () {}
-                  : () => _answer(option, question),
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                children: [
-                  _mediaFor(option, maxWidth: 126, height: 92),
-                  const SizedBox(height: 6),
-                  Text(
-                    option.name,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: _selectedAnswerId == option.id
-                          ? Colors.white
-                          : const Color(0xFF002247),
-                      fontSize: 18,
-                      height: 1,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
   Widget _buildCameraActions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -454,13 +597,23 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
           onPressed: _isSubmitting
               ? null
               : () async {
-                  await _controller.skipCameraForSession();
-                  if (mounted) {
-                    setState(() {
-                      _isCorrectAnswer = false;
-                      _selectedAnswerId = null;
-                      _tip = null;
-                    });
+                  if (widget.demoQuestion != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Camera input is a visual-only demo. Try the practice button.',
+                        ),
+                      ),
+                    );
+                  } else {
+                    await _controller!.skipCameraForSession();
+                    if (mounted) {
+                      setState(() {
+                        _isCorrectAnswer = false;
+                        _selectedAnswerId = null;
+                        _tip = null;
+                      });
+                    }
                   }
                 },
           child: const Text("Can't sign right now"),
@@ -540,8 +693,12 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
   }
 
   Widget _buildFinished(BuildContext context) {
-    final total = _controller.totalAnswered;
-    final correct = _controller.correctCount;
+    final total = widget.demoQuestion == null
+        ? _controller?.totalAnswered ?? 0
+        : _demoTotalAnswered;
+    final correct = widget.demoQuestion == null
+        ? _controller?.correctCount ?? 0
+        : _demoCorrectCount;
     final accuracy = total > 0 ? correct / total : 0.0;
 
     return Scaffold(
