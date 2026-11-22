@@ -55,7 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final bool isMobile = constraints.maxWidth < 600;
 
         if (!isMobile) {
-          // TABLET VIEW
+          // TABLET VIEW / WIDE SCREEN VIEW
           return Scaffold(
             body: SafeArea(
               child: Row(

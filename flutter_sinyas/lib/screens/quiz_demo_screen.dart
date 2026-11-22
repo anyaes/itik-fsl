@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/*import 'package:flutter/material.dart';
 
 import '../demo/demo_quiz_data.dart';
 import '../models/question.dart';
@@ -156,7 +156,7 @@ class QuizDemoScreen extends StatelessWidget {
     );
   }
 
-  void _openQuiz(BuildContext context, LessonQuestion question) {
+  /*void _openQuiz(BuildContext context, LessonQuestion question) {
     _open(
       context,
       LessonQuizScreen.demo(question: question, demoVideoLinks: demoVideoLinks),
@@ -165,7 +165,7 @@ class QuizDemoScreen extends StatelessWidget {
 
   void _open(BuildContext context, Widget page) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
-  }
+  }*/
 
   Future<void> _openVideo(BuildContext context) async {
     final opened = await openDemoVideo(demoVideoUrl);
@@ -175,4 +175,5 @@ class QuizDemoScreen extends StatelessWidget {
       );
     }
   }
-}
+  
+}*/

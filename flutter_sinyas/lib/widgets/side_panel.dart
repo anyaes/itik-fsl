@@ -19,7 +19,7 @@ class SidePanel extends StatelessWidget {
     return Container(
       width: 300, // Fixed width prevents Row layout errors on tablet
       alignment: Alignment.centerLeft,
-      margin: const EdgeInsets.symmetric(horizontal: 24),
+      margin: const EdgeInsets.fromLTRB(24, 24, 0, 24),
       padding: const EdgeInsets.only(right: 24),
       decoration: BoxDecoration(
         border: BorderDirectional(

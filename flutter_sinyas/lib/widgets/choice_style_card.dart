@@ -8,6 +8,8 @@ class ChoiceStyleCard extends StatelessWidget {
     required this.child,
     this.scale = 1,
     this.padding,
+    this.selectedColor = const Color(0xFF1EA8C3),
+    this.selectedBackgroundColor = const Color(0xFF4EBFD0),
   });
 
   final bool isSelected;
@@ -15,11 +17,13 @@ class ChoiceStyleCard extends StatelessWidget {
   final Widget child;
   final double scale;
   final EdgeInsetsGeometry? padding;
+  final Color selectedColor;
+  final Color selectedBackgroundColor;
 
   @override
   Widget build(BuildContext context) {
     final selectedColor = isSelected
-        ? const Color(0xFF1EA8C3)
+        ? this.selectedColor
         : Colors.grey.shade300;
 
     return MouseRegion(
@@ -29,10 +33,9 @@ class ChoiceStyleCard extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 100),
           padding:
-              padding ??
-              EdgeInsets.symmetric(horizontal: 16, vertical: 8 * scale),
+              padding ?? EdgeInsets.symmetric(horizontal: 16, vertical: 8 * scale),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF4EBFD0) : Colors.white,
+            color: isSelected ? selectedBackgroundColor : Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: selectedColor, width: 2),
             boxShadow: [

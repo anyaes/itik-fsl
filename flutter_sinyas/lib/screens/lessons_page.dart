@@ -3,6 +3,13 @@ import 'package:flutter_sinyas/widgets/choice_style_card.dart';
 import 'package:flutter_sinyas/services/supabase_service.dart';
 import 'package:flutter_sinyas/models/course.dart';
 
+/*
+  Lessons page is what renders on the Lessons tab.
+  This includes the nodes, side panel, etc.
+
+  They load from db
+*/
+
 const _navy = Color(0xFF002247);
 const _teal = Color(0xFF1EADC3);
 const _pageBackground = Color(0xFFF4FAFB);
@@ -642,7 +649,13 @@ class _ToolsRail extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => onToolSelected('Daily goals'),
-                  child: const Text('VIEW GOALS'),
+                  child: const Text('VIEW GOALS',
+                    style: TextStyle(
+                      fontFamily: 'Dongle',
+                      fontSize: 24,
+                      height: 2
+                    )
+                  ),
                 ),
               ),
             ],
@@ -658,13 +671,23 @@ class _ToolsRail extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: () => onToolSelected('Sign guide'),
                 icon: const Icon(Icons.menu_book_rounded),
-                label: const Text('Sign guide'),
+                label: const Text('Sign guide',
+                style: TextStyle(
+                      fontFamily: 'Dongle',
+                      fontSize: 24,
+                      height: 2
+                    )),
               ),
               const SizedBox(height: 8),
               FilledButton.icon(
                 onPressed: () => onToolSelected('Camera practice'),
                 icon: const Icon(Icons.camera_alt_rounded),
-                label: const Text('Camera practice'),
+                label: const Text('Camera practice',
+                style: TextStyle(
+                      fontFamily: 'Dongle',
+                      fontSize: 24,
+                      height: 2
+                    )),
               ),
             ],
           ),
@@ -707,6 +730,7 @@ class _InfoCard extends StatelessWidget {
                   style: const TextStyle(
                     color: _navy,
                     fontSize: 20,
+                    fontFamily: 'Dongle',
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -854,7 +878,7 @@ class _LessonNode extends StatelessWidget {
             color: lesson.isUnlocked
                 ? _navy
                 : _navy.withValues(alpha: 0.45),
-            fontSize: 17,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),

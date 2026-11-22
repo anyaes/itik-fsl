@@ -87,7 +87,7 @@ class _ItikAppState extends State<ItikApp> {
         '/login': (BuildContext context) => const LoginScreen(),
         '/signup': (BuildContext context) => const SignupScreen(),
         '/onboarding': (BuildContext context) => const OnboardingScreen(),
-        '/quiz-demo': (BuildContext context) => const QuizDemoScreen(),
+        //'/quiz-demo': (BuildContext context) => const QuizDemoScreen(),
         '/lesson': (BuildContext context) {
           if (Supabase.instance.client.auth.currentUser == null) {
             return const LoginScreen();

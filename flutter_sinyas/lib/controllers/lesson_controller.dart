@@ -12,6 +12,7 @@ class LessonController extends ChangeNotifier {
   List<Sign> _distractors = [];
   List<LessonQuestion> queue = [];
 
+  int _originalLength = 0;
   int currentIndex = 0;
   int correctCount = 0;
   int totalAnswered = 0;
@@ -23,7 +24,12 @@ class LessonController extends ChangeNotifier {
   LessonQuestion? get currentQuestion =>
       currentIndex < queue.length ? queue[currentIndex] : null;
 
-  bool get isFinished => !isLoading && currentIndex >= queue.length;
+  bool get isFinished => !isLoading && currentIndex >= _originalLength;
+
+  double get progress {
+    if (_originalLength == 0) return 0.0;
+    return (correctCount / _originalLength).clamp(0.0, 1.0);
+  }
 
   // 1. Load data from Supabase and build randomized questions
   Future<void> initLesson() async {
@@ -63,6 +69,10 @@ class LessonController extends ChangeNotifier {
       }
     }
 
+    final maxQuestions = 10 + random.nextInt(6); // 10 to 15
+
+    _originalLength = generated.length;
+
     return generated;
   }
 
@@ -82,64 +92,47 @@ class LessonController extends ChangeNotifier {
 
   // 2. Submit an answer (from Multiple Choice OR Python Camera API)
   Future<void> submitAnswer(bool isCorrect, {double? confidence}) async {
-    final question = currentQuestion;
-    if (question == null) return;
+  final question = currentQuestion;
+  if (question == null) return;
 
-    totalAnswered++;
-    if (isCorrect) {
-      correctCount++;
-    } else {
-      // Re-queue missed question at the end of the lesson
-      queue.add(
-        LessonQuestion(
-          targetSign: question.targetSign,
-          mode: question.mode,
-          options: question.options,
-          isRetry: true,
-        ),
-      );
-    }
-
-    await _service.logAttempt(
-      signId: question.targetSign.id,
-      lessonId: lessonId,
-      mode: question.mode,
-      status: 'completed',
-      isCorrect: isCorrect,
-      confidenceScore: confidence,
-    );
-
-    currentIndex++;
-
-    if (isFinished) {
-      final accuracy = totalAnswered > 0 ? correctCount / totalAnswered : 1.0;
-      await _service.completeLesson(lessonId, accuracy);
-    }
-
-    notifyListeners();
+  totalAnswered++;
+  if (isCorrect) {
+    correctCount++;
   }
+  // No re-queue — wrong answers are logged but not repeated
+
+  await _service.logAttempt(
+    signId: question.targetSign.id,
+    lessonId: lessonId,
+    mode: question.mode,
+    status: 'completed',
+    isCorrect: isCorrect,
+    confidenceScore: confidence,
+  );
+
+  currentIndex++;
+
+  if (isFinished) {
+    final accuracy = totalAnswered > 0 ? correctCount / totalAnswered : 1.0;
+    await _service.completeLesson(lessonId, accuracy);
+  }
+
+  notifyListeners();
+}
 
   Future<void> recordIncorrectAnswer() async {
-    final question = currentQuestion;
-    if (question == null) return;
+  final question = currentQuestion;
+  if (question == null) return;
 
-    await _service.logAttempt(
-      signId: question.targetSign.id,
-      lessonId: lessonId,
-      mode: question.mode,
-      status: 'completed',
-      isCorrect: false,
-    );
-    queue.add(
-      LessonQuestion(
-        targetSign: question.targetSign,
-        mode: question.mode,
-        options: question.options,
-        isRetry: true,
-      ),
-    );
-    totalAnswered++;
-  }
+  await _service.logAttempt(
+    signId: question.targetSign.id,
+    lessonId: lessonId,
+    mode: question.mode,
+    status: 'completed',
+    isCorrect: false,
+  );
+  totalAnswered++;
+}
 
   // 3. Skip Camera ("Can't sign right now")
   Future<void> skipCameraForSession() async {
@@ -152,7 +145,7 @@ class LessonController extends ChangeNotifier {
       signId: question.targetSign.id,
       lessonId: lessonId,
       mode: QuestionMode.cameraSign,
-      status: 'skipped',
+      status: 'SKIPPED',
     );
 
     final random = Random();
