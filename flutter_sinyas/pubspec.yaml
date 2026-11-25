@@ -41,6 +41,7 @@ dependencies:
   path_provider: ^2.1.6
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.2
+  mediapipe_vision: ^0.4.1
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +68,7 @@ flutter:
       - assets/mascot.png
       - assets/FeatherHeart.svg
       - assets/lesson.svg
+      - assets/mediapipe/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -107,3 +109,7 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+hooks:
+  user_defines:
+    mediapipe_vision:
+      models: [face_landmarker, hand_landmarker]

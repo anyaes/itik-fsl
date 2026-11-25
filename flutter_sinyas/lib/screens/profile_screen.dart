@@ -21,9 +21,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _profile = _service.fetchCurrentProfile();
   }
 
-  Future<void> _refresh() async {
-    setState(() => _profile = _service.fetchCurrentProfile());
-    await _profile;
+  void _refresh() {
+    setState(() {
+      _profile = _service.fetchCurrentProfile();
+    });
   }
 
   @override
@@ -122,7 +123,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             OutlinedButton.icon(
                               onPressed: () => _editDisplayName(displayName),
                               icon: const Icon(Icons.edit_outlined),
-                              label: const Text('Edit name'),
+                              label: const Text('Edit name',
+                              style: TextStyle(
+                                fontFamily: 'Dongle',
+                                fontSize: 24,
+                                height: 1.6,
+                              )),
                             ),
                           ],
                         ),
@@ -192,7 +198,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (name == null || name.trim().isEmpty || !mounted) return;
     try {
       await _service.updateDisplayName(name);
-      await _refresh();
+      _refresh();
     } catch (error) {
       if (mounted) _showMessage('Could not update profile: $error');
     }

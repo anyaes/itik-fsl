@@ -77,7 +77,7 @@ class SidePanel extends StatelessWidget {
                         item.label,
                         style: TextStyle(
                           fontFamily: 'Dongle',
-                          fontSize: 40,
+                          fontSize: 36,
                           color: Color(0xFF002247),
                         ),
                       ),

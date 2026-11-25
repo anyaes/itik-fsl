@@ -5,9 +5,9 @@ import '/screens/home_screen.dart';
 import '/screens/lesson_screen.dart';
 import '/screens/login.dart';
 import '/screens/onboarding_screen.dart';
-import '/screens/quiz_demo_screen.dart';
+// import '/screens/quiz_demo_screen.dart';
 import '/screens/signup.dart';
-import '/screens/video_test.dart';
+// import '/screens/video_test.dart';
 import '/screens/lesson_quiz_screen.dart';
 import 'dart:async';
 

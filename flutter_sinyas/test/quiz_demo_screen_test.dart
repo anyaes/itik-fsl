@@ -20,7 +20,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MaterialApp(home: QuizDemoScreen()));
+    // await tester.pumpWidget(const MaterialApp(home: QuizDemoScreen()));
     await tester.tap(find.text('Watch a video, choose a sign name'));
     await tester.pumpAndSettle();
 
