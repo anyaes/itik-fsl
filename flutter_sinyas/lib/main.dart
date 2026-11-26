@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '/screens/home_screen.dart';
@@ -39,6 +40,7 @@ class ItikApp extends StatefulWidget {
 class _ItikAppState extends State<ItikApp> {
   bool _isLoading = true;
   bool _isAuthenticated = false;
+  bool _onboardingComplete = false;
   StreamSubscription<AuthState>? _authSubscription;
 
   @override
@@ -47,10 +49,12 @@ class _ItikAppState extends State<ItikApp> {
     _checkAuth();
     _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
       data,
-    ) {
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
       if (!mounted) return;
       setState(() {
         _isAuthenticated = data.session != null;
+        _onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
         _isLoading = false;
       });
     });
@@ -58,9 +62,11 @@ class _ItikAppState extends State<ItikApp> {
 
   Future<void> _checkAuth() async {
     final session = Supabase.instance.client.auth.currentSession;
+    final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(() {
       _isAuthenticated = session != null;
+      _onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
       _isLoading = false;
     });
   }
@@ -164,7 +170,9 @@ class _ItikAppState extends State<ItikApp> {
           ),
         ),
       ),
-      home: _isAuthenticated ? const HomeScreen() : const LoginScreen(),
+      home: !_isAuthenticated
+          ? const LoginScreen()
+          : (_onboardingComplete ? const HomeScreen() : const OnboardingScreen()),
     );
   }
 }

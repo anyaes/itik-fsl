@@ -42,6 +42,8 @@ dependencies:
   shared_preferences: ^2.5.5
   url_launcher: ^6.3.2
   mediapipe_vision: ^0.4.1
+  tflite_flutter: ^0.11.0
+  camera: ^0.11.1
 
 dev_dependencies:
   flutter_test:
@@ -69,6 +71,7 @@ flutter:
       - assets/FeatherHeart.svg
       - assets/lesson.svg
       - assets/mediapipe/
+      - assets/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

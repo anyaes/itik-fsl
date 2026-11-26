@@ -6,6 +6,7 @@ import '../controllers/lesson_controller.dart';
 import '../models/question.dart';
 import '../models/sign.dart';
 import '../services/supabase_service.dart';
+import '../widgets/camera_sign_view.dart';
 import '../widgets/choice_style_card.dart';
 import '../widgets/decorative_panel.dart';
 import '../widgets/demo_video_preview.dart';
@@ -464,22 +465,15 @@ class _LessonQuizScreenState extends State<LessonQuizScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            DecorativePanel(
-              padding: const EdgeInsets.all(28),
-              child: const Column(
-                children: [
-                  Icon(
-                    Icons.videocam_outlined,
-                    color: Color(0xFF16899F),
-                    size: 72,
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Camera practice preview',
-                    style: TextStyle(color: Color(0xFF526D76), fontSize: 20),
-                  ),
-                ],
-              ),
+            CameraSignView(
+              targetSign: question.targetSign.name,
+              onSignDetected: (label) {
+                setState(() {
+                  _isCorrectAnswer = true;
+                  _tip = null;
+                });
+              },
+              enabled: widget.demoQuestion == null,
             ),
             const SizedBox(height: 18),
             _buildCameraActions(),
